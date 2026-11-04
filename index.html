@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tyler App</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0f17">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tyler App">
+<style>
+html,body{margin:0;height:100%;background:#0b0f17;color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);box-sizing:border-box}
+.m{width:72px;height:72px;border-radius:20px;border:2px solid #ffd277;color:#ffd277;font-size:44px;font-weight:700;display:flex;align-items:center;justify-content:center}
+h1{font-size:22px;font-weight:600;margin:14px 0 22px}
+form{width:100%;max-width:320px;display:none}
+input{width:100%;box-sizing:border-box;font-size:16px;padding:12px;border-radius:12px;border:1px solid #2a3344;background:#141a26;color:#f3f4f6}
+button{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:12px;background:#ffd277;color:#0b0f17;font-size:16px;font-weight:600}
+#e{color:#ff8a80;font-size:14px;min-height:18px;margin-top:10px;text-align:center}
+#s{color:#9ca3af;font-size:14px;margin-top:6px;text-align:center}
+</style>
+</head>
+<body>
+<div class="m">T</div>
+<h1>Tyler App</h1>
+<form id="f"><input id="p" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password"><button type="submit">Unlock</button><div id="e"></div></form>
+<div id="s">Opening…</div>
+<script>
+(function () {
+  var API = 'https://script.google.com/macros/s/AKfycbwubhWYG0ZPxF9hkoxq0Brd5Bz4Zz7vD037vIrfTHOzqHrLbIRrVs1S4c6EVKBWobpt/exec';
+  var $ = function (i) { return document.getElementById(i); };
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function put(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* quota or blocked */ } }
+  function show(pw) { $('s').textContent = ''; $('f').style.display = 'block'; if (pw) $('e').textContent = pw; try { $('p').focus(); } catch (e) { } }
+  function status(t) { $('s').textContent = t; }
+  function api(pw, have) {
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'getPage', args: [have || '', pw], pw: pw }), redirect: 'follow' })
+      .then(function (r) { return r.json(); });
+  }
+  function write(html) { document.open(); document.write(html); document.close(); }
+  function store(r) {
+    put('page:html', r.html); put('page:hash', r.hash); put('page:at', String(Date.now()));
+  }
+  function rejected(r) {
+    put('tylerPw', null);
+    $('e').textContent = '';
+    show(r.msg || 'Wrong password');
+    if (r.msg) status(r.msg);
+  }
+  function start(pw) {
+    var html = get('page:html'), hash = get('page:hash');
+    if (html && hash) {
+      // instant launch from cache; refresh for next time in the background
+      api(pw, hash).then(function (r) {
+        if (r && r.ok && r.html && r.hash) store(r);
+        else if (r && r.auth === false) put('tylerPw', null);
+      }).catch(function () { });
+      write(html);
+      return;
+    }
+    status('Opening…');
+    api(pw, '').then(function (r) {
+      if (r && r.auth === false) { rejected(r); return; }
+      if (r && r.ok && r.html) { store(r); write(r.html); return; }
+      status((r && r.msg) || 'Could not open the app');
+    }).catch(function () { status('No connection and nothing saved yet'); });
+  }
+  try {
+    var q = /[?&]pw=([^&]*)/.exec(location.search);
+    if (q) { put('tylerPw', decodeURIComponent(q[1])); try { history.replaceState(null, '', location.pathname); } catch (e) { } }
+  } catch (e) { }
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    try { navigator.serviceWorker.register('sw.js').catch(function () { }); } catch (e) { }
+  }
+  var pw = get('tylerPw');
+  if (pw) start(pw);
+  else show();
+  $('f').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = $('p').value.trim();
+    if (!v) { $('e').textContent = 'Type the password'; return; }
+    $('e').textContent = ''; put('tylerPw', v); $('f').style.display = 'none'; status('Opening…');
+    start(v);
+  });
+})();
+</script>
+</body>
+</html>
