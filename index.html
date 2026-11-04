@@ -14,8 +14,15 @@
 <style>
 html,body{margin:0;height:100%;background:#0b0f17;color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);box-sizing:border-box}
-.m{width:72px;height:72px;border-radius:20px;border:2px solid #ffd277;color:#ffd277;font-size:44px;font-weight:700;display:flex;align-items:center;justify-content:center}
-h1{font-size:22px;font-weight:600;margin:14px 0 22px}
+.m{width:72px;height:72px;display:block}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:24px;font-weight:600;margin:14px 0 16px}
+.sweep{position:relative;width:120px;height:2px;overflow:hidden;margin:0 0 22px;border-radius:1px;background:rgba(255,255,255,.06)}
+.sweep:after{content:"";position:absolute;left:0;top:0;height:2px;width:35%;background:linear-gradient(90deg,transparent,#ffd277,transparent);animation:slide 1.1s linear infinite}
+form[style*="display: block"]~.sweep{display:none}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+@media (prefers-reduced-motion:reduce){.sweep:after{animation:none;width:100%}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#s:empty{display:none}
 form{width:100%;max-width:320px;display:none}
 input{width:100%;box-sizing:border-box;font-size:16px;padding:12px;border-radius:12px;border:1px solid #2a3344;background:#141a26;color:#f3f4f6}
 button{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:12px;background:#ffd277;color:#0b0f17;font-size:16px;font-weight:600}
@@ -24,10 +31,11 @@ button{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:12px;ba
 </style>
 </head>
 <body>
-<div class="m">T</div>
+<svg class="m" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0b0f17" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M8 9.5h16M16 9.5V24" stroke="#ffd277" stroke-width="3.2" stroke-linecap="round" fill="none"/></svg>
 <h1>Tyler App</h1>
 <form id="f"><input id="p" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password"><button type="submit">Unlock</button><div id="e"></div></form>
-<div id="s">Opening…</div>
+<div class="sweep" role="status"><span class="sr-only">Opening…</span></div>
+<div id="s"></div>
 <script>
 (function () {
   var API = 'https://script.google.com/macros/s/AKfycbwubhWYG0ZPxF9hkoxq0Brd5Bz4Zz7vD037vIrfTHOzqHrLbIRrVs1S4c6EVKBWobpt/exec';
