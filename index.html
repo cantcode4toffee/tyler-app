@@ -75,9 +75,13 @@ button{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:12px;ba
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     try { navigator.serviceWorker.register('sw.js').catch(function () { }); } catch (e) { }
   }
-  var pw = get('tylerPw');
-  if (pw) start(pw);
-  else show();
+  // Defer until this document has finished parsing: document.open()/write() during parsing would
+  // append the app under the loader instead of replacing it.
+  setTimeout(function () {
+    var pw = get('tylerPw');
+    if (pw) start(pw);
+    else show();
+  }, 0);
   $('f').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var v = $('p').value.trim();
