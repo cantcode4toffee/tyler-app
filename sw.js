@@ -1,5 +1,5 @@
 'use strict';
-var VERSION = 'tyler-app-v1';
+var VERSION = 'tyler-app-v2';   // v2: brush T icons
 var PRECACHE = ['./', './index.html', './manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
