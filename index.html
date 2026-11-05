@@ -60,13 +60,32 @@ button{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:12px;ba
       .then(function (r) { return r.json(); });
   }
   function write(html) { document.open(); document.write(html); document.close(); }
+  function deviceName() {
+    var u = navigator.userAgent || '', k = /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) ? 'iPad' : /Android/.test(u) ? 'Android' : /Windows/.test(u) ? 'Windows' : /Mac/.test(u) ? 'Mac' : 'Device';
+    var d = new Date(), mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    return k + ' · ' + d.getDate() + ' ' + mo + ' ' + d.getFullYear();
+  }
+  // First sign-in with the password: the backend issues this phone its own token, used from then on.
+  function register(pw) {
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'registerDevice', args: [deviceName(), pw], pw: pw }), redirect: 'follow' })
+      .then(function (r) { return r.json(); });
+  }
+  function launch(cred) {
+    if (/^dt_[0-9a-f]{40}$/.test(cred)) { start(cred); return; }
+    status('Signing in…');
+    register(cred).then(function (r) {
+      if (r && r.ok && r.token) { put('tylerPw', r.token); start(r.token); }
+      else if (r && r.auth === false) rejected(r);
+      else start(cred);
+    }).catch(function () { start(cred); });   // offline: open from the cache with what we have
+  }
   function store(r) {
     put('page:html', r.html); put('page:hash', r.hash); put('page:at', String(Date.now()));
   }
   function rejected(r) {
     put('tylerPw', null);
     $('e').textContent = '';
-    show(r.msg || 'Wrong password');
+    show(r.revoked ? 'This phone was signed out. Enter the password to sign in again.' : (r.msg || 'Wrong password'));
     if (r.msg) status(r.msg);
   }
   function start(pw) {
@@ -98,15 +117,15 @@ button{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:12px;ba
   // append the app under the loader instead of replacing it.
   setTimeout(function () {
     var pw = get('tylerPw');
-    if (pw) start(pw);
+    if (pw) launch(pw);
     else show();
   }, 0);
   $('f').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var v = $('p').value.trim();
     if (!v) { $('e').textContent = 'Type the password'; return; }
-    $('e').textContent = ''; put('tylerPw', v); $('f').style.display = 'none'; status('Opening…');
-    start(v);
+    $('e').textContent = ''; put('tylerPw', v); $('f').style.display = 'none';
+    launch(v);
   });
 })();
 </script>
