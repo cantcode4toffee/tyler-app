@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Back to the PC dashboard</title>
+<style>body{font-family:system-ui,sans-serif;background:#0a1a26;color:#eaf2ff;margin:0;padding:32px 16px;text-align:center}a{color:#2fd9c4}</style>
+</head><body>
+<p>Sending you back to the PC dashboard...</p>
+<p><a id="back" href="http://localhost:8765/natwest/callback">Back to the PC dashboard</a></p>
+<script>
+var target = 'http://localhost:8765/natwest/callback' + location.search;
+document.getElementById('back').href = target;
+location.replace(target);
+</script>
+</body></html>

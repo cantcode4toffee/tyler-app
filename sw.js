@@ -1,5 +1,5 @@
 'use strict';
-var VERSION = 'tyler-app-v2';   // v2: brush T icons
+var VERSION = 'tyler-app-v3';   // v3: only the app page itself is kept as the offline copy
 var PRECACHE = ['./', './index.html', './manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
@@ -20,6 +20,7 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;   // script.google.com, fonts etc. pass straight through
+  if (req.mode === 'navigate' && !/\/(index\.html)?$/.test(url.pathname)) return;   // other pages (e.g. natwest-callback.html) pass straight through
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(function (res) {
       var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put('./index.html', copy); });
