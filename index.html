@@ -88,21 +88,40 @@ button{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:12px;ba
     show(r.revoked ? 'This phone was signed out. Enter the password to sign in again.' : (r.msg || 'Wrong password'));
     if (r.msg) status(r.msg);
   }
+  // Update check. A new copy is stored for the next launch AND announced to the running app: the window
+  // object survives document.open()/write(), so window.__tylerUpdate and the 'tyler-update' event reach it.
+  var curPw = '', runHash = '';
+  function announce() {
+    window.__tylerUpdate = true;
+    try { window.dispatchEvent(new Event('tyler-update')); }
+    catch (e) { try { var ev = document.createEvent('Event'); ev.initEvent('tyler-update', false, false); window.dispatchEvent(ev); } catch (e2) { } }
+  }
+  function check() {   // resolves true when a copy newer than the one on screen is waiting
+    if (!curPw) return Promise.resolve(false);
+    if (get('page:hash') && get('page:hash') !== runHash) { announce(); return Promise.resolve(true); }   // already fetched, still waiting for a reload
+    return api(curPw, runHash).then(function (r) {
+      if (r && r.ok && r.html && r.hash) {
+        store(r);
+        if (r.hash !== runHash) { announce(); return true; }
+      } else if (r && r.auth === false) put('tylerPw', null);
+      return false;
+    }).catch(function () { return false; });
+  }
+  window.__tylerCheck = check;
   function start(pw) {
     var html = get('page:html'), hash = get('page:hash');
+    curPw = pw;
     if (html && hash) {
-      // instant launch from cache; refresh for next time in the background
-      api(pw, hash).then(function (r) {
-        if (r && r.ok && r.html && r.hash) store(r);
-        else if (r && r.auth === false) put('tylerPw', null);
-      }).catch(function () { });
+      // instant launch from cache; look for a newer copy in the background, store it and tell the app
+      runHash = hash;
+      check();
       write(html);
       return;
     }
     status('Opening…');
     api(pw, '').then(function (r) {
       if (r && r.auth === false) { rejected(r); return; }
-      if (r && r.ok && r.html) { store(r); write(r.html); return; }
+      if (r && r.ok && r.html) { store(r); runHash = r.hash; write(r.html); return; }
       status((r && r.msg) || 'Could not open the app');
     }).catch(function () { status('No connection and nothing saved yet'); });
   }
